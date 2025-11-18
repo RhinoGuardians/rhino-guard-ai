@@ -1,78 +1,23 @@
-import { CheckCircle2, TrendingUp } from "lucide-react";
-import savannaAerial from "@/assets/savanna-aerial.jpg";
-
-const achievements = [
-  "MVP deployed and functional",
-  "<2 second detection-to-alert",
-  "95% accuracy proven in testing"
-];
-
-const potential = [
-  { value: "96%", label: "Reduction in poaching incidents" },
-  { value: "2,410", label: "Remaining black rhinos to protect" },
-  { value: "200+", label: "African reserves for deployment" }
-];
+import crisisVisualization from "@/assets/crisis-visualization.png";
 
 const ImpactSlide = () => {
   return (
-    <div className="relative w-full h-full flex items-center overflow-hidden">
-      {/* Background */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${savannaAerial})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/70" />
+    <div className="w-full h-full flex flex-col items-center justify-center px-16 py-12 animate-fade-in">
+      <h2 className="text-6xl font-bold mb-12 text-foreground">
+        Our Potential Impact
+      </h2>
+      
+      <div className="w-full max-w-7xl">
+        <img 
+          src={crisisVisualization} 
+          alt="Africa map showing rhino conservation impact zones with heat map overlay, displaying 2,410 rhinos across 200+ reserves with 96% reduction potential"
+          className="w-full h-auto rounded-xl border-2 border-primary shadow-2xl shadow-primary/20"
+        />
       </div>
-
-      {/* Content */}
-      <div className="relative z-10 max-w-4xl ml-16 animate-fade-in">
-        <h2 className="text-6xl font-bold mb-12 text-foreground">
-          The Impact We Can Make
-        </h2>
-
-        {/* Current Achievements */}
-        <div className="mb-12">
-          <h3 className="text-3xl font-semibold mb-6 text-primary">
-            Current Achievements
-          </h3>
-          <div className="space-y-4">
-            {achievements.map((achievement, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <CheckCircle2 className="w-8 h-8 text-primary shrink-0" />
-                <p className="text-2xl text-foreground">{achievement}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Growth Arrow */}
-        <div className="flex items-center gap-4 my-8">
-          <TrendingUp className="w-12 h-12 text-primary" />
-          <div className="flex-1 h-1 bg-primary" />
-        </div>
-
-        {/* Potential Impact */}
-        <div>
-          <h3 className="text-3xl font-semibold mb-6 text-primary">
-            Potential Impact
-          </h3>
-          <div className="grid grid-cols-3 gap-6">
-            {potential.map((item, index) => (
-              <div
-                key={index}
-                className="p-6 bg-primary/20 border border-primary rounded-xl text-center"
-              >
-                <p className="text-4xl font-bold text-primary mb-2">
-                  {item.value}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {item.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      
+      <p className="text-xl text-muted-foreground mt-8 text-center max-w-3xl">
+        Protecting rhinos across the African continent with AI-powered surveillance
+      </p>
     </div>
   );
 };
