@@ -29,7 +29,11 @@ const TeamSlide = () => {
               <img 
                 src={member.photo} 
                 alt={`${member.name} - ${member.role}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
