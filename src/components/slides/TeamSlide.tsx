@@ -1,9 +1,15 @@
+import linfordPhoto from "@/assets/team/linford.jpg";
+import raniaPhoto from "@/assets/team/rania.jpg";
+import shrustiPhoto from "@/assets/team/shrusti.jpg";
+import williamPhoto from "@/assets/team/william.jpg";
+import azukaPhoto from "@/assets/team/azuka.jpg";
+
 const teamMembers = [
-  { name: "Linford", role: "Project Coordinator", emoji: "🎯" },
-  { name: "Rania", role: "Deep Learning Engineer", emoji: "🧠" },
-  { name: "Shrusti", role: "ML Engineer", emoji: "📊" },
-  { name: "William", role: "Frontend Developer", emoji: "🎨" },
-  { name: "Azuka", role: "Backend Engineer", emoji: "⚙️" }
+  { name: "Linford", role: "Project Coordinator", emoji: "🎯", photo: linfordPhoto },
+  { name: "Rania", role: "Deep Learning Engineer", emoji: "🧠", photo: raniaPhoto },
+  { name: "Shrusti", role: "ML Engineer", emoji: "📊", photo: shrustiPhoto },
+  { name: "William", role: "Frontend Developer", emoji: "🎨", photo: williamPhoto },
+  { name: "Azuka", role: "Backend Engineer", emoji: "⚙️", photo: azukaPhoto }
 ];
 
 const TeamSlide = () => {
@@ -19,8 +25,13 @@ const TeamSlide = () => {
             key={index}
             className="flex flex-col items-center text-center group"
           >
-            <div className="w-40 h-40 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border-4 border-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <span className="text-6xl">{member.emoji}</span>
+            <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-primary mb-6 group-hover:scale-110 group-hover:border-primary/80 transition-all duration-300 shadow-xl">
+              <img 
+                src={member.photo} 
+                alt={`${member.name} - ${member.role}`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-2">
               {member.name}
@@ -28,6 +39,7 @@ const TeamSlide = () => {
             <p className="text-lg text-muted-foreground">
               {member.role}
             </p>
+            <span className="text-2xl mt-2">{member.emoji}</span>
           </div>
         ))}
       </div>
