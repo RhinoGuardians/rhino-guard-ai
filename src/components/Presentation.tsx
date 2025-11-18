@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Play, Pause, Timer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import HeroSlide from "@/components/slides/HeroSlide";
 import CrisisSlide from "@/components/slides/CrisisSlide";
 import ProblemSlide from "@/components/slides/ProblemSlide";
@@ -44,98 +42,165 @@ const Presentation = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === " ") {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === "Escape" && isFullscreen) {
+        e.preventDefault();
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+      } else if (e.key === "h" || e.key === "H") {
+        e.preventDefault();
+        setControlsManuallyHidden((prev) => !prev);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        goToSlide(slides.length - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentSlide, isFullscreen]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      if (!document.fullscreenElement) {
+        setShowControls(true);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+
     const handleMouseMove = () => {
       setShowControls(true);
-      setControlsManuallyHidden(false);
+      
       if (mouseTimer) {
         clearTimeout(mouseTimer);
       }
-      setMouseTimer(
-        setTimeout(() => {
-          if (!isFullscreen && !controlsManuallyHidden) {
-            setShowControls(false);
-          }
-        }, 3000)
-      );
+      
+      const timer = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+      
+      setMouseTimer(timer);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-
+    
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       if (mouseTimer) {
         clearTimeout(mouseTimer);
       }
     };
-  }, [isFullscreen, mouseTimer, controlsManuallyHidden]);
+  }, [isFullscreen, mouseTimer]);
 
   useEffect(() => {
-    if (isAutoPlay) {
-      setAutoPlayTimer(
-        setTimeout(() => {
-          nextSlide();
-        }, timeRemaining * 1000)
-      );
+    const cleanup = () => {
+      if (autoPlayTimer) clearTimeout(autoPlayTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+    };
 
-      setCountdownInterval(
-        setInterval(() => {
-          setTimeRemaining((prevTime) => (prevTime > 0 ? prevTime - 1 : 20));
-        }, 1000)
-      );
-    } else {
-      if (autoPlayTimer) {
-        clearTimeout(autoPlayTimer);
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
+    if (!isAutoPlay) {
+      cleanup();
       setTimeRemaining(20);
+      return;
     }
 
-    return () => {
-      if (autoPlayTimer) {
-        clearTimeout(autoPlayTimer);
+    setTimeRemaining(20);
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          return 20;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    setCountdownInterval(interval);
+
+    const timer = setTimeout(() => {
+      if (currentSlide < slides.length - 1) {
+        nextSlide();
+      } else {
+        setIsAutoPlay(false);
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
-    };
-  }, [isAutoPlay, timeRemaining]);
+    }, 20000);
+    setAutoPlayTimer(timer);
+
+    return cleanup;
+  }, [isAutoPlay, currentSlide]);
 
   const nextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    if (isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide - 1 + slides.length) % slides.length);
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    if (isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
-  const goToSlide = (slideIndex: number) => {
-    setCurrentSlide(slideIndex);
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+    if (isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
   const toggleAutoPlay = () => {
-    setIsAutoPlay((prevState) => !prevState);
+    setIsAutoPlay((prev) => !prev);
+    if (!isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
   const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      }
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      document.exitFullscreen();
+      setIsFullscreen(false);
+      setShowControls(true);
+      setControlsManuallyHidden(false);
     }
-    setIsFullscreen(!isFullscreen);
-    setShowControls(true);
   };
 
   const exportToPDF = async () => {
     try {
       setIsExporting(true);
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
       const pdfWidth = 297;
       const pdfHeight = 210;
       const originalSlide = currentSlide;
@@ -148,6 +213,7 @@ const Presentation = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const slideElement = document.querySelector('.w-full.h-full > div') as HTMLElement;
+        
         if (slideElement) {
           const canvas = await html2canvas(slideElement, {
             scale: 2,
@@ -158,8 +224,13 @@ const Presentation = () => {
           });
           
           const imgData = canvas.toDataURL('image/jpeg', 0.85);
-          if (i > 0) pdf.addPage();
+          
+          if (i > 0) {
+            pdf.addPage();
+          }
+          
           pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+          
           pdf.setFontSize(10);
           pdf.setTextColor(150, 150, 150);
           pdf.text(`${i + 1} / ${slides.length}`, pdfWidth - 20, pdfHeight - 5);
@@ -168,7 +239,9 @@ const Presentation = () => {
       
       setCurrentSlide(originalSlide);
       setControlsManuallyHidden(false);
+      
       pdf.save('RhinoGuardians-Presentation.pdf');
+      
       setIsExporting(false);
     } catch (error) {
       console.error('PDF export failed:', error);
@@ -176,56 +249,178 @@ const Presentation = () => {
     }
   };
 
-  const SlideComponent = slides[currentSlide];
+  const CurrentSlideComponent = slides[currentSlide];
 
   return (
-    <div className="relative w-full h-full bg-black text-white overflow-hidden">
-      <SlideComponent />
+    <div className={`relative w-full h-screen overflow-hidden bg-background ${(isFullscreen && !showControls) || controlsManuallyHidden ? 'cursor-none' : ''}`}>
+      {/* Slide Content */}
+      <div className="w-full h-full">
+        <CurrentSlideComponent />
+      </div>
 
-      {showControls && !isExporting && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-between px-4 pointer-events-none">
-          <div className="w-1/5 flex justify-start items-center">
-            <Button variant="ghost" size="icon" onClick={prevSlide} className="pointer-events-auto">
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-          </div>
+      {/* Auto-Play & Fullscreen Controls */}
+      <div 
+        className={`fixed top-8 right-8 z-50 flex items-center gap-3 transition-opacity duration-300 ${
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        {/* Export PDF Button */}
+        <Button
+          onClick={exportToPDF}
+          variant="outline"
+          size="sm"
+          disabled={isExporting}
+          className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+          aria-label="Export as PDF"
+        >
+          {isExporting ? (
+            <>
+              <Timer className="h-4 w-4 mr-2 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </>
+          )}
+        </Button>
 
-          <div className="w-3/5 flex flex-col items-center justify-center">
-            <div className="flex items-center justify-center space-x-2 pointer-events-auto">
-              <Button variant="ghost" size="icon" onClick={toggleAutoPlay}>
-                {isAutoPlay ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-              </Button>
-              {isAutoPlay && (
-                <div className="flex items-center space-x-1">
-                  <Timer className="h-4 w-4" />
-                  <span>{timeRemaining}</span>
-                </div>
-              )}
-              <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-                {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-              </Button>
-              <Button variant="ghost" size="icon" onClick={exportToPDF} disabled={isExporting}>
-                <Download className="h-5 w-5" />
-              </Button>
+        {/* Auto-Play Toggle */}
+        <Button
+          onClick={toggleAutoPlay}
+          variant={isAutoPlay ? "default" : "outline"}
+          size="sm"
+          className={`bg-background/80 backdrop-blur-sm ${
+            isAutoPlay 
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+              : 'hover:bg-primary hover:text-primary-foreground'
+          }`}
+          aria-label={isAutoPlay ? "Disable auto-play" : "Enable auto-play"}
+        >
+          {isAutoPlay ? (
+            <>
+              <Pause className="h-4 w-4 mr-2" />
+              Auto-Play On
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2" />
+              Auto-Play
+            </>
+          )}
+        </Button>
+
+        {/* Fullscreen Toggle */}
+        <Button
+          onClick={toggleFullscreen}
+          variant="outline"
+          size="icon"
+          className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {isFullscreen ? (
+            <Minimize className="h-4 w-4" />
+          ) : (
+            <Maximize className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Navigation Controls */}
+      <div 
+        className={`fixed bottom-8 left-8 flex items-center gap-4 z-50 transition-opacity duration-300 ${
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        {isAutoPlay && (
+          <Button
+            onClick={toggleAutoPlay}
+            variant="outline"
+            size="icon"
+            className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+            aria-label="Pause auto-play"
+          >
+            <Pause className="h-4 w-4" />
+          </Button>
+        )}
+        
+        <Button
+          onClick={prevSlide}
+          variant="outline"
+          size="icon"
+          className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+          disabled={currentSlide === 0}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-sm font-medium text-foreground bg-background/80 backdrop-blur-sm px-4 py-2 rounded-lg">
+          {currentSlide + 1} / {slides.length}
+        </span>
+        <Button
+          onClick={nextSlide}
+          variant="outline"
+          size="icon"
+          className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+          disabled={currentSlide === slides.length - 1}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Timer Countdown */}
+      {isAutoPlay && (
+        <div 
+          className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
+            (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-primary/20 flex items-center gap-2 shadow-lg">
+            <Timer className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">
+              Next slide in {timeRemaining}s
+            </span>
+            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-2">
+              <div 
+                className="h-full bg-primary transition-all duration-1000 ease-linear"
+                style={{ width: `${(timeRemaining / 20) * 100}%` }}
+              />
             </div>
-            <div className="flex items-center justify-center space-x-2 mt-2 pointer-events-auto">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  className={`h-2 w-2 rounded-full ${currentSlide === index ? "bg-white" : "bg-gray-500"} hover:bg-gray-400`}
-                  onClick={() => goToSlide(index)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="w-1/5 flex justify-end items-center">
-            <Button variant="ghost" size="icon" onClick={nextSlide} className="pointer-events-auto">
-              <ChevronRight className="h-6 w-6" />
-            </Button>
           </div>
         </div>
       )}
+
+      {/* Dot Navigation */}
+      <div 
+        className={`fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50 transition-opacity duration-300 ${
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentSlide
+                ? "bg-primary scale-125"
+                : "bg-muted hover:bg-muted-foreground"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Progress Bar */}
+      <div 
+        className={`fixed bottom-0 left-0 w-full h-1 bg-muted z-50 transition-opacity duration-300 ${
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <div
+          className="h-full bg-primary transition-all duration-300"
+          style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+        />
+      </div>
     </div>
   );
 };
