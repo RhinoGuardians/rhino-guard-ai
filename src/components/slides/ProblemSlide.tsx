@@ -1,4 +1,5 @@
 import { AlertCircle, Camera, Users, Plane } from "lucide-react";
+import poacherThreat from "@/assets/poacher-threat.png";
 
 const problems = [
   {
@@ -25,7 +26,18 @@ const problems = [
 
 const ProblemSlide = () => {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center px-16 py-12 animate-fade-in">
+    <div className="relative w-full h-full flex flex-col items-center justify-center px-16 py-12 animate-fade-in overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${poacherThreat})` }}
+      />
+      
+      {/* Dark Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/75 to-background/85" />
+      
+      {/* Content */}
+      <div className="relative z-10 w-full flex flex-col items-center justify-center">
       <h2 className="text-6xl font-bold mb-16 text-center text-foreground">
         Current Methods Are Too Slow
       </h2>
@@ -34,7 +46,7 @@ const ProblemSlide = () => {
         {problems.map((problem, index) => (
           <div
             key={index}
-            className="flex flex-col items-center text-center p-8 bg-card border border-border rounded-xl hover:border-primary transition-all duration-300"
+            className="flex flex-col items-center text-center p-8 bg-card/85 backdrop-blur-md border-2 border-border/50 rounded-xl hover:border-primary transition-all duration-300"
           >
             <div className="w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center mb-6">
               <problem.icon className="w-10 h-10 text-destructive" />
@@ -53,6 +65,7 @@ const ProblemSlide = () => {
         <p className="text-2xl text-muted-foreground italic">
           Traditional methods can't match the speed and scale needed
         </p>
+      </div>
       </div>
     </div>
   );
