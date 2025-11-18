@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Maximize, Minimize } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Minimize, Play, Pause, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeroSlide from "@/components/slides/HeroSlide";
 import CrisisSlide from "@/components/slides/CrisisSlide";
@@ -34,6 +34,10 @@ const Presentation = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [mouseTimer, setMouseTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isAutoPlay, setIsAutoPlay] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(20);
+  const [autoPlayTimer, setAutoPlayTimer] = useState<NodeJS.Timeout | null>(null);
+  const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,16 +101,68 @@ const Presentation = () => {
     };
   }, [isFullscreen, mouseTimer]);
 
+  useEffect(() => {
+    const cleanup = () => {
+      if (autoPlayTimer) clearTimeout(autoPlayTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+    };
+
+    if (!isAutoPlay) {
+      cleanup();
+      setTimeRemaining(20);
+      return;
+    }
+
+    setTimeRemaining(20);
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          return 20;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    setCountdownInterval(interval);
+
+    const timer = setTimeout(() => {
+      if (currentSlide < slides.length - 1) {
+        nextSlide();
+      } else {
+        setIsAutoPlay(false);
+      }
+    }, 20000);
+    setAutoPlayTimer(timer);
+
+    return cleanup;
+  }, [isAutoPlay, currentSlide]);
+
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
+    if (isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    if (isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
+    if (isAutoPlay) {
+      setTimeRemaining(20);
+    }
+  };
+
+  const toggleAutoPlay = () => {
+    setIsAutoPlay((prev) => !prev);
+    if (!isAutoPlay) {
+      setTimeRemaining(20);
+    }
   };
 
   const toggleFullscreen = () => {
@@ -129,12 +185,38 @@ const Presentation = () => {
         <CurrentSlideComponent />
       </div>
 
-      {/* Fullscreen Toggle Button */}
+      {/* Auto-Play & Fullscreen Controls */}
       <div 
-        className={`fixed top-8 right-8 z-50 transition-opacity duration-300 ${
+        className={`fixed top-8 right-8 z-50 flex items-center gap-3 transition-opacity duration-300 ${
           isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
+        {/* Auto-Play Toggle */}
+        <Button
+          onClick={toggleAutoPlay}
+          variant={isAutoPlay ? "default" : "outline"}
+          size="sm"
+          className={`bg-background/80 backdrop-blur-sm ${
+            isAutoPlay 
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+              : 'hover:bg-primary hover:text-primary-foreground'
+          }`}
+          aria-label={isAutoPlay ? "Disable auto-play" : "Enable auto-play"}
+        >
+          {isAutoPlay ? (
+            <>
+              <Pause className="h-4 w-4 mr-2" />
+              Auto-Play On
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2" />
+              Auto-Play
+            </>
+          )}
+        </Button>
+
+        {/* Fullscreen Toggle */}
         <Button
           onClick={toggleFullscreen}
           variant="outline"
@@ -156,6 +238,18 @@ const Presentation = () => {
           isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
+        {isAutoPlay && (
+          <Button
+            onClick={toggleAutoPlay}
+            variant="outline"
+            size="icon"
+            className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+            aria-label="Pause auto-play"
+          >
+            <Pause className="h-4 w-4" />
+          </Button>
+        )}
+        
         <Button
           onClick={prevSlide}
           variant="outline"
@@ -178,6 +272,28 @@ const Presentation = () => {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Timer Countdown */}
+      {isAutoPlay && (
+        <div 
+          className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
+            isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-primary/20 flex items-center gap-2 shadow-lg">
+            <Timer className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">
+              Next slide in {timeRemaining}s
+            </span>
+            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-2">
+              <div 
+                className="h-full bg-primary transition-all duration-1000 ease-linear"
+                style={{ width: `${(timeRemaining / 20) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dot Navigation */}
       <div 
