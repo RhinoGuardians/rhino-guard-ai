@@ -1,4 +1,4 @@
-import dashboardMockup from "@/assets/dashboard-mockup.jpg";
+import dashboardUI from "@/assets/dashboard-ui.jpg";
 
 const DashboardSlide = () => {
   return (
@@ -23,8 +23,8 @@ const DashboardSlide = () => {
         {/* Dashboard Image */}
         <div className="relative rounded-xl overflow-hidden border-2 border-primary shadow-2xl shadow-primary/20">
           <img 
-            src={dashboardMockup} 
-            alt="RhinoGuardians Dashboard showing real-time wildlife tracking"
+            src={dashboardUI} 
+            alt="Live Detection Dashboard showing map interface with filters and active alerts"
             className="w-full h-auto"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none" />
@@ -34,12 +34,12 @@ const DashboardSlide = () => {
         <div className="mt-8 grid grid-cols-3 gap-4">
           <div className="text-center p-4 bg-card border border-border rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">Map Coverage</p>
-            <p className="text-2xl font-bold text-primary">Serengeti</p>
+            <p className="text-2xl font-bold text-primary">Limpopo Park</p>
           </div>
           <div className="text-center p-4 bg-card border border-border rounded-lg">
-            <p className="text-sm text-muted-foreground mb-1">Detection Markers</p>
+            <p className="text-sm text-muted-foreground mb-1">Detection Types</p>
             <p className="text-2xl font-bold text-primary">
-              <span className="text-green-500">Green</span> / <span className="text-destructive">Red</span>
+              Rhino / Threat / Alert
             </p>
           </div>
           <div className="text-center p-4 bg-card border border-border rounded-lg">
