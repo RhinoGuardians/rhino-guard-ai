@@ -34,7 +34,7 @@ const ProblemSlide = () => {
       />
       
       {/* Dark Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/75 to-background/85" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-background/40 to-background/50" />
       
       {/* Content */}
       <div className="relative z-10 w-full flex flex-col items-center justify-center">
@@ -46,7 +46,7 @@ const ProblemSlide = () => {
         {problems.map((problem, index) => (
           <div
             key={index}
-            className="flex flex-col items-center text-center p-8 bg-card/85 backdrop-blur-md border-2 border-border/50 rounded-xl hover:border-primary transition-all duration-300"
+            className="flex flex-col items-center text-center p-8 bg-card/40 backdrop-blur-md border-2 border-border/50 rounded-xl hover:border-primary transition-all duration-300"
           >
             <div className="w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center mb-6">
               <problem.icon className="w-10 h-10 text-destructive" />
