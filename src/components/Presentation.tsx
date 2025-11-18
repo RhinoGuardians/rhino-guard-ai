@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Maximize, Minimize, Play, Pause, Timer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Minimize, Play, Pause, Timer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeroSlide from "@/components/slides/HeroSlide";
 import CrisisSlide from "@/components/slides/CrisisSlide";
@@ -39,6 +39,7 @@ const Presentation = () => {
   const [autoPlayTimer, setAutoPlayTimer] = useState<NodeJS.Timeout | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
   const [controlsManuallyHidden, setControlsManuallyHidden] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -187,6 +188,67 @@ const Presentation = () => {
     }
   };
 
+  const exportToPDF = async () => {
+    try {
+      setIsExporting(true);
+      
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = 297;
+      const pdfHeight = 210;
+      const originalSlide = currentSlide;
+      
+      setControlsManuallyHidden(true);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      for (let i = 0; i < slides.length; i++) {
+        setCurrentSlide(i);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const slideElement = document.querySelector('.w-full.h-full > div') as HTMLElement;
+        
+        if (slideElement) {
+          const canvas = await html2canvas(slideElement, {
+            scale: 2,
+            backgroundColor: '#0a0a0a',
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.85);
+          
+          if (i > 0) {
+            pdf.addPage();
+          }
+          
+          pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+          
+          pdf.setFontSize(10);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(`${i + 1} / ${slides.length}`, pdfWidth - 20, pdfHeight - 5);
+        }
+      }
+      
+      setCurrentSlide(originalSlide);
+      setControlsManuallyHidden(false);
+      
+      pdf.save('RhinoGuardians-Presentation.pdf');
+      
+      setIsExporting(false);
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      setIsExporting(false);
+    }
+  };
+
   const CurrentSlideComponent = slides[currentSlide];
 
   return (
@@ -202,6 +264,28 @@ const Presentation = () => {
           (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
+        {/* Export PDF Button */}
+        <Button
+          onClick={exportToPDF}
+          variant="outline"
+          size="sm"
+          disabled={isExporting}
+          className="bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+          aria-label="Export as PDF"
+        >
+          {isExporting ? (
+            <>
+              <Timer className="h-4 w-4 mr-2 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </>
+          )}
+        </Button>
+
         {/* Auto-Play Toggle */}
         <Button
           onClick={toggleAutoPlay}
