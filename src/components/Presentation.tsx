@@ -38,6 +38,7 @@ const Presentation = () => {
   const [timeRemaining, setTimeRemaining] = useState(20);
   const [autoPlayTimer, setAutoPlayTimer] = useState<NodeJS.Timeout | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
+  const [controlsManuallyHidden, setControlsManuallyHidden] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,6 +56,15 @@ const Presentation = () => {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
+      } else if (e.key === "h" || e.key === "H") {
+        e.preventDefault();
+        setControlsManuallyHidden((prev) => !prev);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        goToSlide(slides.length - 1);
       }
     };
 
@@ -173,13 +183,14 @@ const Presentation = () => {
       document.exitFullscreen();
       setIsFullscreen(false);
       setShowControls(true);
+      setControlsManuallyHidden(false);
     }
   };
 
   const CurrentSlideComponent = slides[currentSlide];
 
   return (
-    <div className={`relative w-full h-screen overflow-hidden bg-background ${isFullscreen && !showControls ? 'cursor-none' : ''}`}>
+    <div className={`relative w-full h-screen overflow-hidden bg-background ${(isFullscreen && !showControls) || controlsManuallyHidden ? 'cursor-none' : ''}`}>
       {/* Slide Content */}
       <div className="w-full h-full">
         <CurrentSlideComponent />
@@ -188,7 +199,7 @@ const Presentation = () => {
       {/* Auto-Play & Fullscreen Controls */}
       <div 
         className={`fixed top-8 right-8 z-50 flex items-center gap-3 transition-opacity duration-300 ${
-          isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
         {/* Auto-Play Toggle */}
@@ -235,7 +246,7 @@ const Presentation = () => {
       {/* Navigation Controls */}
       <div 
         className={`fixed bottom-8 left-8 flex items-center gap-4 z-50 transition-opacity duration-300 ${
-          isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
         {isAutoPlay && (
@@ -277,7 +288,7 @@ const Presentation = () => {
       {isAutoPlay && (
         <div 
           className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
-            isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         >
           <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-primary/20 flex items-center gap-2 shadow-lg">
@@ -298,7 +309,7 @@ const Presentation = () => {
       {/* Dot Navigation */}
       <div 
         className={`fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50 transition-opacity duration-300 ${
-          isFullscreen && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
         {slides.map((_, index) => (
@@ -318,7 +329,7 @@ const Presentation = () => {
       {/* Progress Bar */}
       <div 
         className={`fixed bottom-0 left-0 w-full h-1 bg-muted z-50 transition-opacity duration-300 ${
-          isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'
+          (isFullscreen && !showControls) || controlsManuallyHidden ? 'opacity-0' : 'opacity-100'
         }`}
       >
         <div
